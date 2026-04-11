@@ -22,8 +22,9 @@ export default function Home() {
   const [taskProgress, setTaskProgress] = useState<Record<number, boolean>>({});
   const [notes, setNotes] = useState("");
   const [statusOpacity, setStatusOpacity] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // NEW STATE FOR MOBILE
 
-  // Load data from localStorage when the week changes
+  // Load data from localStorage
   useEffect(() => {
     const activeData = dsaPlan.find(w => w.week === activeWeek);
     if (!activeData) return;
@@ -55,12 +56,24 @@ export default function Home() {
     localStorage.setItem(`w${activeWeek}_task${index}`, String(newVal));
   };
 
+  const selectWeek = (week: number) => {
+    setActiveWeek(week);
+    setIsMobileMenuOpen(false); // Auto-close menu on mobile when a week is selected
+  };
+
   const activeData = dsaPlan.find(w => w.week === activeWeek);
   let currentPhase = "";
 
   return (
     <>
-      <div className="sidebar">
+      {/* Mobile Dark Overlay */}
+      <div 
+        className={`overlay ${isMobileMenuOpen ? 'open' : ''}`} 
+        onClick={() => setIsMobileMenuOpen(false)}
+      ></div>
+
+      {/* Sidebar with dynamic class for mobile */}
+      <div className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
         <div className="sidebar-header">Neural Path DSA</div>
         {dsaPlan.map((data) => {
           let phaseHeader = null;
@@ -73,7 +86,7 @@ export default function Home() {
               {phaseHeader}
               <div 
                 className={`nav-item ${activeWeek === data.week ? 'active' : ''}`}
-                onClick={() => setActiveWeek(data.week)}
+                onClick={() => selectWeek(data.week)}
               >
                 Week {data.week}: {data.title.split(',')[0]}
               </div>
@@ -82,9 +95,17 @@ export default function Home() {
         })}
       </div>
 
+      {/* Main Content Area */}
       <div className="main-content">
         <div className="content-wrapper">
-          <div className="header-badge">WEEK {activeData?.week}</div>
+          
+          {/* Mobile Header (Only visible on small screens) */}
+          <div className="mobile-header">
+            <div className="header-badge" style={{marginBottom: 0}}>WEEK {activeData?.week}</div>
+            <button className="menu-btn" onClick={() => setIsMobileMenuOpen(true)}>☰ Menu</button>
+          </div>
+
+          <div className="header-badge" style={{display: 'none'}}>WEEK {activeData?.week}</div> {/* Hidden on mobile, handled by mobile header */}
           <h1 className="week-title">{activeData?.title}</h1>
           <p className="week-focus">{activeData?.focus}</p>
 

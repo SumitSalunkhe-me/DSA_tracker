@@ -110,3 +110,51 @@ body {
 }
 .notes-area:focus { border-color: var(--primary); }
 .save-status { font-size: 12px; color: var(--success); margin-top: 8px; transition: opacity 0.3s; }
+
+/* --- Mobile Responsive Upgrades --- */
+.mobile-header {
+  display: none;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.menu-btn {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 40;
+  backdrop-filter: blur(2px);
+}
+
+@media (max-width: 768px) {
+  .mobile-header { display: flex; }
+  
+  /* Sidebar becomes an off-canvas menu */
+  .sidebar {
+    position: fixed;
+    top: 0; bottom: 0; left: -300px;
+    z-index: 50;
+    transition: left 0.3s ease;
+    width: 280px;
+  }
+  
+  .sidebar.open { left: 0; }
+  .overlay.open { display: block; }
+  
+  /* Adjust main content for smaller screens */
+  .main-content { padding: 20px; }
+  .week-title { font-size: 24px; }
+  .task-card { padding: 12px 15px; }
+}
