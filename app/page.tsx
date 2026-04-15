@@ -1,6 +1,13 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase Client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const dsaPlan = [
   { phase: "Phase 1: Mechanics", week: 1, title: "Arrays, Math & Bit Manipulation", focus: "Core aptitude. Modulo arithmetic, prime numbers, XOR operations, and understanding continuous memory layout.", problems: ["Two Sum", "Contains Duplicate", "Missing Number", "Single Number"] },
@@ -22,22 +29,50 @@ export default function Home() {
   const [taskProgress, setTaskProgress] = useState<Record<number, boolean>>({});
   const [notes, setNotes] = useState("");
   const [statusOpacity, setStatusOpacity] = useState(0);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // NEW STATE FOR MOBILE
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Load data from localStorage
+  // Grab the User ID directly from Clerk Auth
+  const { isLoaded, isSignedIn, userId } = useAuth();
+
+  // Load Data (Cloud if logged in, Local Storage if not)
   useEffect(() => {
     const activeData = dsaPlan.find(w => w.week === activeWeek);
     if (!activeData) return;
 
-    const loadedTasks: Record<number, boolean> = {};
-    activeData.problems.forEach((_, index) => {
-      loadedTasks[index] = localStorage.getItem(`w${activeWeek}_task${index}`) === 'true';
-    });
-    setTaskProgress(loadedTasks);
-    setNotes(localStorage.getItem(`w${activeWeek}_notes`) || "");
-  }, [activeWeek]);
+    async function loadCloudData() {
+      if (!userId) return;
+      const { data, error } = await supabase
+        .from('user_progress')
+        .select('task_index, is_completed')
+        .eq('user_id', userId)
+        .eq('week_num', activeWeek);
 
-  // Autosave notes
+      if (error) {
+        console.error("Error fetching data:", error);
+        return;
+      }
+
+      const cloudTasks: Record<number, boolean> = {};
+      data?.forEach(row => {
+        cloudTasks[row.task_index] = row.is_completed;
+      });
+      setTaskProgress(cloudTasks);
+    }
+
+    if (isSignedIn && userId) {
+      loadCloudData();
+    } else {
+      const loadedTasks: Record<number, boolean> = {};
+      activeData.problems.forEach((_, index) => {
+        loadedTasks[index] = localStorage.getItem(`w${activeWeek}_task${index}`) === 'true';
+      });
+      setTaskProgress(loadedTasks);
+    }
+    
+    setNotes(localStorage.getItem(`w${activeWeek}_notes`) || "");
+  }, [activeWeek, isSignedIn, userId]);
+
+  // Autosave notes (Currently keeping notes in local storage for simplicity, can move to cloud later)
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       const savedNote = localStorage.getItem(`w${activeWeek}_notes`) || "";
@@ -50,15 +85,33 @@ export default function Home() {
     return () => clearTimeout(timeoutId);
   }, [notes, activeWeek]);
 
-  const toggleTask = (index: number) => {
+  // The Checkbox Toggle Function
+  const toggleTask = async (index: number) => {
     const newVal = !taskProgress[index];
+    
+    // 1. Update UI instantly
     setTaskProgress(prev => ({ ...prev, [index]: newVal }));
-    localStorage.setItem(`w${activeWeek}_task${index}`, String(newVal));
+
+    // 2. Save Data (Cloud or Local)
+    if (isSignedIn && userId) {
+      const { error } = await supabase
+        .from('user_progress')
+        .upsert({
+          user_id: userId,
+          week_num: activeWeek,
+          task_index: index,
+          is_completed: newVal
+        }, { onConflict: 'user_id, week_num, task_index' }); // Updates if exists, creates if new
+        
+      if (error) console.error("Error saving to cloud:", error);
+    } else {
+      localStorage.setItem(`w${activeWeek}_task${index}`, String(newVal));
+    }
   };
 
   const selectWeek = (week: number) => {
     setActiveWeek(week);
-    setIsMobileMenuOpen(false); // Auto-close menu on mobile when a week is selected
+    setIsMobileMenuOpen(false);
   };
 
   const activeData = dsaPlan.find(w => w.week === activeWeek);
@@ -66,13 +119,11 @@ export default function Home() {
 
   return (
     <>
-      {/* Mobile Dark Overlay */}
       <div 
         className={`overlay ${isMobileMenuOpen ? 'open' : ''}`} 
         onClick={() => setIsMobileMenuOpen(false)}
       ></div>
 
-      {/* Sidebar with dynamic class for mobile */}
       <div className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
         <div className="sidebar-header">Neural Path DSA</div>
         {dsaPlan.map((data) => {
@@ -95,17 +146,30 @@ export default function Home() {
         })}
       </div>
 
-      {/* Main Content Area */}
       <div className="main-content">
         <div className="content-wrapper">
           
-          {/* Mobile Header (Only visible on small screens) */}
-          <div className="mobile-header">
-            <div className="header-badge" style={{marginBottom: 0}}>WEEK {activeData?.week}</div>
-            <button className="menu-btn" onClick={() => setIsMobileMenuOpen(true)}>☰ Menu</button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+            <div>
+              <div className="mobile-header" style={{ marginBottom: 0, display: isMobileMenuOpen ? 'none' : '' }}>
+                <button className="menu-btn" onClick={() => setIsMobileMenuOpen(true)}>☰ Menu</button>
+              </div>
+              <div className="header-badge" style={{ display: 'inline-block', margin: 0 }}>WEEK {activeData?.week}</div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              {!isLoaded ? null : !isSignedIn ? (
+                <SignInButton mode="modal">
+                  <button className="menu-btn" style={{ background: 'var(--primary)', color: '#000', border: 'none' }}>
+                    Sign In
+                  </button>
+                </SignInButton>
+              ) : (
+                <UserButton />
+              )}
+            </div>
           </div>
 
-          <div className="header-badge" style={{display: 'none'}}>WEEK {activeData?.week}</div> {/* Hidden on mobile, handled by mobile header */}
           <h1 className="week-title">{activeData?.title}</h1>
           <p className="week-focus">{activeData?.focus}</p>
 
