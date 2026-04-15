@@ -6,223 +6,369 @@ import { createClient } from '@supabase/supabase-js';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-// Supabase Init
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-const dsaPlan = [
-  { phase: "Phase 1: Mechanics", week: 1, title: "Arrays, Math & Bit Manipulation", focus: "Core aptitude. Modulo arithmetic, prime numbers, XOR operations, and understanding continuous memory layout.", problems: ["Two Sum", "Contains Duplicate", "Missing Number", "Single Number"] },
-  { phase: "Phase 1: Mechanics", week: 2, title: "Two Pointers", focus: "Moving from O(N²) loops to O(N) by converging from both sides or moving at different speeds.", problems: ["Valid Palindrome", "3Sum", "Container With Most Water", "Trapping Rain Water"] },
-  { phase: "Phase 1: Mechanics", week: 3, title: "Sliding Window", focus: "Maintaining a dynamic 'window' of data over an array to find optimal contiguous subsections.", problems: ["Best Time to Buy and Sell Stock", "Longest Substring Without Repeating Characters", "Longest Repeating Character Replacement"] },
-  { phase: "Phase 2: Logic", week: 4, title: "Hash Maps & Sets", focus: "O(1) lookups. Trading space complexity for massive time complexity gains.", problems: ["Valid Anagram", "Group Anagrams", "Top K Frequent Elements", "Longest Consecutive Sequence"] },
-  { phase: "Phase 2: Logic", week: 5, title: "Linked Lists", focus: "Pointer manipulation. Focus on the 'Tortoise and Hare' fast/slow pointer concept.", problems: ["Reverse Linked List", "Merge Two Sorted Lists", "Linked List Cycle", "Reorder List"] },
-  { phase: "Phase 2: Logic", week: 6, title: "Stacks & Queues", focus: "LIFO logic. Excellent for parsing strings or keeping track of previous states.", problems: ["Valid Parentheses", "Evaluate Reverse Polish Notation", "Min Stack", "Daily Temperatures"] },
-  { phase: "Phase 3: Hierarchies", week: 7, title: "Binary Trees & DFS", focus: "Plunging deep into a tree using recursion. Understanding Pre/In/Post-order traversal.", problems: ["Invert Binary Tree", "Maximum Depth of Binary Tree", "Lowest Common Ancestor"] },
-  { phase: "Phase 3: Hierarchies", week: 8, title: "Binary Trees & BFS", focus: "Exploring trees layer by layer using a Queue to find shortest paths.", problems: ["Binary Tree Level Order Traversal", "Binary Tree Right Side View"] },
-  { phase: "Phase 3: Hierarchies", week: 9, title: "Tries & Heaps", focus: "Advanced structural optimization. Tries for word searches, Heaps for dynamic max/min tracking.", problems: ["Implement Trie", "Kth Largest Element in a Stream", "Merge K Sorted Lists"] },
-  { phase: "Phase 4: Mapping", week: 10, title: "Graphs", focus: "Translating real-world connections into an Adjacency List or Matrix.", problems: ["Number of Islands", "Clone Graph", "Course Schedule (Cycle Detection)"] },
-  { phase: "Phase 4: Mapping", week: 11, title: "1D Dynamic Programming", focus: "Breaking big problems into cached subproblems. The Check -> Calculate -> Save -> Return pattern.", problems: ["Climbing Stairs", "House Robber", "Coin Change", "Longest Increasing Subsequence"] },
-  { phase: "Phase 4: Mapping", week: 12, title: "Backtracking", focus: "Controlled DFS. Building a solution incrementally and 'undoing' the last step if it hits a dead end.", problems: ["Subsets", "Permutations", "Combination Sum", "Word Search"] }
-];
+const curriculumData: Record<string, any[]> = {
+  "DSA": [
+    { 
+      phase: "Phase 1: Mechanics", week: 1, title: "Arrays, Math & Bit Manipulation", focus: "Core aptitude. Modulo arithmetic, prime numbers, XOR operations.", 
+      problems: [
+        { title: "Two Sum", difficulty: "Easy", link: "https://leetcode.com/problems/two-sum/", description: "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.", hint: "Use a Hash Map to store the required difference as you iterate. O(n) time.", starterCode: "def twoSum(self, nums: List[int], target: int) -> List[int]:\n    pass" },
+        { title: "Contains Duplicate", difficulty: "Easy", link: "https://leetcode.com/problems/contains-duplicate/", description: "Return true if any value appears at least twice in the array.", hint: "Convert the list to a set and compare lengths.", starterCode: "def containsDuplicate(self, nums: List[int]) -> bool:\n    pass" },
+        { title: "Missing Number", difficulty: "Easy", link: "https://leetcode.com/problems/missing-number/" },
+        { title: "Single Number", difficulty: "Easy", link: "https://leetcode.com/problems/single-number/" }
+      ] 
+    },
+    { 
+      phase: "Phase 1: Mechanics", week: 2, title: "Two Pointers", focus: "Moving from O(N²) loops to O(N) by converging from both sides.", 
+      problems: [
+        { title: "Valid Palindrome", difficulty: "Easy", link: "https://leetcode.com/problems/valid-palindrome/", description: "Check if a string is a palindrome, ignoring non-alphanumeric characters.", hint: "Set a left pointer at 0 and right pointer at len(s)-1." },
+        { title: "3Sum", difficulty: "Medium", link: "https://leetcode.com/problems/3sum/" },
+        { title: "Container With Most Water", difficulty: "Medium", link: "https://leetcode.com/problems/container-with-most-water/" },
+        { title: "Trapping Rain Water", difficulty: "Hard", link: "https://leetcode.com/problems/trapping-rain-water/" }
+      ] 
+    },
+    { 
+      phase: "Phase 1: Mechanics", week: 3, title: "Sliding Window", focus: "Maintaining a dynamic 'window' of data over an array.", 
+      problems: [
+        { title: "Best Time to Buy and Sell Stock", difficulty: "Easy", link: "https://leetcode.com/problems/best-time-to-buy-and-sell-stock/" },
+        { title: "Longest Substring Without Repeating Characters", difficulty: "Medium", link: "https://leetcode.com/problems/longest-substring-without-repeating-characters/" },
+        { title: "Longest Repeating Character Replacement", difficulty: "Medium", link: "https://leetcode.com/problems/longest-repeating-character-replacement/" }
+      ] 
+    },
+    { 
+      phase: "Phase 2: Logic", week: 4, title: "Hash Maps & Sets", focus: "O(1) lookups. Trading space complexity for massive time complexity gains.", 
+      problems: [
+        { title: "Valid Anagram", difficulty: "Easy" },
+        { title: "Group Anagrams", difficulty: "Medium" },
+        { title: "Top K Frequent Elements", difficulty: "Medium" },
+        { title: "Longest Consecutive Sequence", difficulty: "Medium" }
+      ] 
+    },
+    { 
+      phase: "Phase 2: Logic", week: 5, title: "Linked Lists", focus: "Pointer manipulation. Focus on the 'Tortoise and Hare' fast/slow pointer concept.", 
+      problems: [
+        { title: "Reverse Linked List", difficulty: "Easy" },
+        { title: "Merge Two Sorted Lists", difficulty: "Easy" },
+        { title: "Linked List Cycle", difficulty: "Easy" },
+        { title: "Reorder List", difficulty: "Medium" }
+      ] 
+    },
+    { 
+      phase: "Phase 2: Logic", week: 6, title: "Stacks & Queues", focus: "LIFO logic. Excellent for parsing strings or keeping track of previous states.", 
+      problems: [
+        { title: "Valid Parentheses", difficulty: "Easy" },
+        { title: "Evaluate Reverse Polish Notation", difficulty: "Medium" },
+        { title: "Min Stack", difficulty: "Medium" },
+        { title: "Daily Temperatures", difficulty: "Medium" }
+      ] 
+    },
+    { 
+      phase: "Phase 3: Hierarchies", week: 7, title: "Binary Trees & DFS", focus: "Plunging deep into a tree using recursion. Pre/In/Post-order traversal.", 
+      problems: [
+        { title: "Invert Binary Tree", difficulty: "Easy" },
+        { title: "Maximum Depth of Binary Tree", difficulty: "Easy" },
+        { title: "Lowest Common Ancestor", difficulty: "Medium" }
+      ] 
+    },
+    { 
+      phase: "Phase 3: Hierarchies", week: 8, title: "Binary Trees & BFS", focus: "Exploring trees layer by layer using a Queue to find shortest paths.", 
+      problems: [
+        { title: "Binary Tree Level Order Traversal", difficulty: "Medium" },
+        { title: "Binary Tree Right Side View", difficulty: "Medium" }
+      ] 
+    },
+    { 
+      phase: "Phase 3: Hierarchies", week: 9, title: "Tries & Heaps", focus: "Advanced structural optimization. Tries for words, Heaps for dynamic max/min.", 
+      problems: [
+        { title: "Implement Trie", difficulty: "Medium" },
+        { title: "Kth Largest Element in a Stream", difficulty: "Easy" },
+        { title: "Merge K Sorted Lists", difficulty: "Hard" }
+      ] 
+    },
+    { 
+      phase: "Phase 4: Mapping", week: 10, title: "Graphs", focus: "Translating real-world connections into an Adjacency List or Matrix.", 
+      problems: [
+        { title: "Number of Islands", difficulty: "Medium" },
+        { title: "Clone Graph", difficulty: "Medium" },
+        { title: "Course Schedule", difficulty: "Medium" }
+      ] 
+    },
+    { 
+      phase: "Phase 4: Mapping", week: 11, title: "1D Dynamic Programming", focus: "Breaking big problems into cached subproblems. Check -> Calc -> Save.", 
+      problems: [
+        { title: "Climbing Stairs", difficulty: "Easy" },
+        { title: "House Robber", difficulty: "Medium" },
+        { title: "Coin Change", difficulty: "Medium" },
+        { title: "Longest Increasing Subsequence", difficulty: "Medium" }
+      ] 
+    },
+    { 
+      phase: "Phase 4: Mapping", week: 12, title: "Backtracking", focus: "Controlled DFS. Building incrementally and 'undoing' the last step.", 
+      problems: [
+        { title: "Subsets", difficulty: "Medium" },
+        { title: "Permutations", difficulty: "Medium" },
+        { title: "Combination Sum", difficulty: "Medium" },
+        { title: "Word Search", difficulty: "Medium" }
+      ] 
+    }
+  ],
+  "AI / ML": [
+    { 
+      phase: "Phase 1: Foundations", week: 1, title: "Linear Algebra & NumPy", focus: "Vectors, matrices, and broadcasting in Python.", 
+      problems: [
+        { title: "Matrix Multiplication", difficulty: "Easy" },
+        { title: "Broadcasting Rules", difficulty: "Medium" }
+      ] 
+    }
+  ],
+  "Web Dev": [
+    { 
+      phase: "Phase 1: Frontend", week: 1, title: "React Fundamentals", focus: "Components, Props, and State.", 
+      problems: [
+        { title: "Build a Counter", difficulty: "Easy" },
+        { title: "Pass Props Down", difficulty: "Easy" }
+      ] 
+    }
+  ]
+};
+
+const courses = Object.keys(curriculumData);
 
 export default function Home() {
+  const [activeCourse, setActiveCourse] = useState(courses[0]);
   const [activeWeek, setActiveWeek] = useState(1);
   const [taskProgress, setTaskProgress] = useState<Record<number, boolean>>({});
+  const [expandedTask, setExpandedTask] = useState<number | null>(null);
   const [notes, setNotes] = useState("");
   const [statusOpacity, setStatusOpacity] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  // New States for Features
   const [notesTab, setNotesTab] = useState<'write' | 'preview'>('write');
   const [reviewsNeeded, setReviewsNeeded] = useState<Record<number, boolean>>({});
 
   const { isLoaded, isSignedIn, userId } = useAuth();
 
-  // Load Data
-  useEffect(() => {
-    const activeData = dsaPlan.find(w => w.week === activeWeek);
-    if (!activeData) return;
+  const currentPlan = curriculumData[activeCourse] || curriculumData["DSA"];
+  const activeData = currentPlan.find(w => w.week === activeWeek) || currentPlan[0];
 
+  const handleCourseSwitch = (course: string) => {
+    setActiveCourse(course);
+    setActiveWeek(1);
+    setExpandedTask(null);
+    setNotes("");
+    setTaskProgress({});
+  };
+
+  useEffect(() => {
+    if (!activeData) return;
     async function loadCloudData() {
       if (!userId) return;
-      const { data: taskData } = await supabase.from('user_progress').select('task_index, is_completed').eq('user_id', userId).eq('week_num', activeWeek);
+      const { data: taskData } = await supabase.from('user_progress').select('task_index, is_completed').eq('user_id', userId).eq('course_name', activeCourse).eq('week_num', activeWeek);
       const cloudTasks: Record<number, boolean> = {};
       taskData?.forEach(row => { cloudTasks[row.task_index] = row.is_completed; });
       setTaskProgress(cloudTasks);
 
-      const { data: notesData } = await supabase.from('user_notes').select('notes_text').eq('user_id', userId).eq('week_num', activeWeek).maybeSingle();
+      const { data: notesData } = await supabase.from('user_notes').select('notes_text').eq('user_id', userId).eq('course_name', activeCourse).eq('week_num', activeWeek).maybeSingle();
       if (notesData?.notes_text) setNotes(notesData.notes_text);
     }
-
     if (isSignedIn && userId) loadCloudData();
-  }, [activeWeek, isSignedIn, userId]);
+  }, [activeWeek, activeCourse, isSignedIn, userId]);
 
-  // Autosave Notes
   useEffect(() => {
     const timeoutId = setTimeout(async () => {
-      const savedNote = localStorage.getItem(`w${activeWeek}_notes`) || "";
+      const localKey = `${activeCourse}_w${activeWeek}_notes`;
+      const savedNote = localStorage.getItem(localKey) || "";
       if (notes !== savedNote && notes !== "") {
-        localStorage.setItem(`w${activeWeek}_notes`, notes);
+        localStorage.setItem(localKey, notes);
         if (isSignedIn && userId) {
-          await supabase.from('user_notes').upsert({ user_id: userId, week_num: activeWeek, notes_text: notes }, { onConflict: 'user_id, week_num' });
+          await supabase.from('user_notes').upsert({ user_id: userId, course_name: activeCourse, week_num: activeWeek, notes_text: notes }, { onConflict: 'user_id, course_name, week_num' });
         }
         setStatusOpacity(1);
         setTimeout(() => setStatusOpacity(0), 2000);
       }
     }, 1000);
     return () => clearTimeout(timeoutId);
-  }, [notes, activeWeek, isSignedIn, userId]);
+  }, [notes, activeWeek, activeCourse, isSignedIn, userId]);
 
   const toggleTask = async (index: number) => {
     const newVal = !taskProgress[index];
     setTaskProgress(prev => ({ ...prev, [index]: newVal }));
     if (isSignedIn && userId) {
-      await supabase.from('user_progress').upsert({ user_id: userId, week_num: activeWeek, task_index: index, is_completed: newVal }, { onConflict: 'user_id, week_num, task_index' });
+      await supabase.from('user_progress').upsert({ user_id: userId, course_name: activeCourse, week_num: activeWeek, task_index: index, is_completed: newVal }, { onConflict: 'user_id, course_name, week_num, task_index' });
     }
   };
 
-  const handleSpacedRepetition = (index: number) => {
+  const handleSpacedRepetition = (e: React.MouseEvent, index: number) => {
+    e.stopPropagation();
     setReviewsNeeded(prev => ({ ...prev, [index]: true }));
     alert("Added to Spaced Repetition Engine! We will remind you to re-solve this in 3 days.");
-    // In next phase, we save this timestamp to Supabase.
   };
 
-  const activeData = dsaPlan.find(w => w.week === activeWeek);
   const totalTasks = activeData?.problems.length || 0;
   const completedTasks = Object.values(taskProgress).filter(Boolean).length;
   const progressPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
-  const groupedPlan = dsaPlan.reduce((acc, curr) => {
+  const groupedPlan = currentPlan.reduce((acc: any, curr: any) => {
     if (!acc[curr.phase]) acc[curr.phase] = [];
     acc[curr.phase].push(curr);
     return acc;
-  }, {} as Record<string, typeof dsaPlan>);
+  }, {} as Record<string, any[]>);
 
-  // Mock array for heatmap rendering
-  const mockHeatmap = Array.from({ length: 60 }).map((_, i) => Math.floor(Math.random() * 4));
+  const mockHeatmap = [0, 1, 0, 2, 1, 3, 0, 0, 1, 2, 3, 2, 1, 0, 1, 2, 0, 0, 1, 3, 2, 1, 0, 2, 3, 1, 0, 1, 2, 0, 1, 3, 2, 0, 1, 2, 1, 0, 3, 2, 1, 0, 0, 1, 2, 3, 1, 0, 1, 2, 0, 1, 2, 3, 2, 1, 0, 1, 2, 0];
 
   return (
-    <>
-      <div className={`overlay ${isMobileMenuOpen ? 'open' : ''}`} onClick={() => setIsMobileMenuOpen(false)}></div>
-
-      <div className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
-        <div className="sidebar-header">Neural Path DSA</div>
-        {Object.entries(groupedPlan).map(([phase, weeks]) => (
-          <div key={phase}>
-            <div className="nav-group">{phase}</div>
-            <div className="timeline-container">
-              <div className="timeline-line"></div>
-              {weeks.map((data) => (
-                <div key={data.week} className={`timeline-item ${activeWeek === data.week ? 'active' : ''}`} onClick={() => {setActiveWeek(data.week); setIsMobileMenuOpen(false);}}>
-                  <div className="timeline-dot"></div>
-                  Week {data.week}: {data.title.split(',')[0]}
-                </div>
-              ))}
-            </div>
+    <div className="app-container">
+      <div className="top-slider">
+        {courses.map(course => (
+          <div key={course} className={`course-tab ${activeCourse === course ? 'active' : ''}`} onClick={() => handleCourseSwitch(course)}>
+            {course}
           </div>
         ))}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', paddingRight: '20px' }}>
+            {!isLoaded ? null : !isSignedIn ? (
+              <SignInButton mode="modal"><button className="menu-btn" style={{ background: 'var(--primary)', color: '#000', border: 'none', padding: '6px 12px' }}>Sign In</button></SignInButton>
+            ) : <UserButton />}
+        </div>
       </div>
 
-      <div className="main-content">
-        <div className="content-wrapper">
-          
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <div className="mobile-header" style={{ marginBottom: 0, display: isMobileMenuOpen ? 'none' : '' }}>
-              <button className="menu-btn" onClick={() => setIsMobileMenuOpen(true)}>☰ Menu</button>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginLeft: 'auto' }}>
-              {!isLoaded ? null : !isSignedIn ? (
-                <SignInButton mode="modal"><button className="menu-btn" style={{ background: 'var(--primary)', color: '#000', border: 'none' }}>Sign In</button></SignInButton>
-              ) : <UserButton />}
-            </div>
-          </div>
+      <div className="workspace">
+        <div className={`overlay ${isMobileMenuOpen ? 'open' : ''}`} onClick={() => setIsMobileMenuOpen(false)}></div>
 
-          {/* --- NEW DASHBOARD GRID --- */}
-          <div className="dashboard-grid">
-            {/* Heatmap Area */}
-            <div className="heatmap-card">
-              <div className="section-title" style={{marginBottom: '5px'}}>Consistency Heatmap</div>
-              <div style={{fontSize: '12px', color: 'var(--text-dim)'}}>14 Day Streak! Keep building neural pathways.</div>
-              <div className="heatmap-grid">
-                {mockHeatmap.map((level, i) => (
-                  <div key={i} className={`heat-box level-${level}`}></div>
+        <div className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
+          <div className="sidebar-header">{activeCourse} PATH</div>
+          {Object.entries(groupedPlan).map(([phase, weeks]: any) => (
+            <div key={phase}>
+              <div className="nav-group">{phase}</div>
+              <div className="timeline-container">
+                <div className="timeline-line"></div>
+                {weeks.map((data: any) => (
+                  <div key={data.week} className={`timeline-item ${activeWeek === data.week ? 'active' : ''}`} onClick={() => {setActiveWeek(data.week); setExpandedTask(null); setIsMobileMenuOpen(false);}}>
+                    <div className="timeline-dot"></div>
+                    Week {data.week}: {data.title.split(',')[0]}
+                  </div>
                 ))}
               </div>
             </div>
+          ))}
+        </div>
 
-            {/* Social Accountability Feed */}
-            <div className="feed-card">
-              <div className="section-title">Live Friend Feed</div>
-              <div className="feed-item">
-                <div className="feed-avatar">S</div>
-                <div className="feed-text"><strong>Soham</strong> conquered <em>Two Sum</em>.</div>
+        <div className="main-content">
+          <div className="content-wrapper">
+            <div className="mobile-header" style={{ marginBottom: '20px', display: isMobileMenuOpen ? 'none' : '' }}>
+              <button className="menu-btn" onClick={() => setIsMobileMenuOpen(true)}>☰ Menu</button>
+            </div>
+
+            <div className="dashboard-grid">
+              <div className="heatmap-card">
+                <div className="section-title" style={{marginBottom: '5px'}}>Consistency Heatmap</div>
+                <div style={{fontSize: '12px', color: 'var(--text-dim)'}}>14 Day Streak! Keep building neural pathways.</div>
+                <div className="heatmap-grid">
+                  {mockHeatmap.map((level, i) => <div key={i} className={`heat-box level-${level}`}></div>)}
+                </div>
               </div>
-              <div className="feed-item">
-                <div className="feed-avatar" style={{background: 'var(--success)'}}>A</div>
-                <div className="feed-text"><strong>Ayush</strong> started <em>Sliding Window</em>.</div>
-              </div>
-              <div className="feed-item">
-                <div className="feed-avatar" style={{background: 'var(--warning)'}}>An</div>
-                <div className="feed-text"><strong>Anubhav</strong> is on a 5-day streak!</div>
+              <div className="feed-card">
+                <div className="section-title">Live Friend Feed</div>
+                <div className="feed-item"><div className="feed-avatar">S</div><div className="feed-text"><strong>Soham</strong> conquered <em>Two Sum</em>.</div></div>
+                <div className="feed-item"><div className="feed-avatar" style={{background: 'var(--success)'}}>A</div><div className="feed-text"><strong>Ayush</strong> started <em>Sliding Window</em>.</div></div>
               </div>
             </div>
-          </div>
 
-          <div className="header-badge">WEEK {activeData?.week}</div>
-          <h1 className="week-title">{activeData?.title}</h1>
-          <p className="week-focus">{activeData?.focus}</p>
+            <div className="header-badge">WEEK {activeData?.week}</div>
+            <h1 className="week-title">{activeData?.title}</h1>
+            <p className="week-focus">{activeData?.focus}</p>
 
-          <div className="progress-container">
-            <div className="progress-fill" style={{ width: `${progressPercentage}%` }}></div>
-          </div>
-
-          <div className="section-title">Execution Checklist</div>
-          <div className="task-list">
-            {activeData?.problems.map((prob, index) => (
-              <label key={index} className="task-card">
-                <input type="checkbox" className="task-checkbox" checked={taskProgress[index] || false} onChange={() => toggleTask(index)} />
-                <span className="task-name">{prob}</span>
-                
-                {/* Spaced Repetition Button */}
-                {!taskProgress[index] && !reviewsNeeded[index] && (
-                  <button className="rep-btn" onClick={(e) => { e.preventDefault(); handleSpacedRepetition(index); }}>
-                    🧠 Failed - Review in 3 Days
-                  </button>
-                )}
-                {reviewsNeeded[index] && <span style={{marginLeft: 'auto', fontSize: '12px', color: 'var(--warning)'}}>Queued for Review</span>}
-              </label>
-            ))}
-          </div>
-
-          <div className="section-title">Execution Notes & Autopsy</div>
-          
-          {/* Markdown Editor Tabs */}
-          <div className="md-tabs">
-            <button className={`md-tab ${notesTab === 'write' ? 'active' : ''}`} onClick={() => setNotesTab('write')}>Write</button>
-            <button className={`md-tab ${notesTab === 'preview' ? 'active' : ''}`} onClick={() => setNotesTab('preview')}>Preview Markdown</button>
-          </div>
-
-          {notesTab === 'write' ? (
-            <textarea 
-              className="notes-area" 
-              placeholder="Use Markdown here! e.g. **Bold**, `code blocks`, or bullet points..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-          ) : (
-            <div className="md-preview">
-              {notes ? (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{notes}</ReactMarkdown>
-              ) : (
-                <span style={{color: 'var(--text-dim)'}}>Nothing to preview. Start typing...</span>
-              )}
+            <div className="progress-container">
+              <div className="progress-fill" style={{ width: `${progressPercentage}%` }}></div>
             </div>
-          )}
-          
-          <div className="save-status" style={{ opacity: statusOpacity }}>Autosaved to cloud storage ✓</div>
+
+            <div className="section-title">Execution Modules</div>
+            <div className="task-list">
+              
+              {activeData?.problems.map((prob: any, index: number) => (
+                <div key={index} className="task-wrapper">
+                  
+                  <div className="task-header-row" onClick={() => setExpandedTask(expandedTask === index ? null : index)}>
+                    <input 
+                      type="checkbox" 
+                      className="task-checkbox" 
+                      checked={taskProgress[index] || false} 
+                      onChange={(e) => { e.stopPropagation(); toggleTask(index); }} 
+                    />
+                    
+                    <div className="task-info-group">
+                      <span className="task-name" style={{ textDecoration: taskProgress[index] ? 'line-through' : 'none', color: taskProgress[index] ? 'var(--text-dim)' : '#fff' }}>
+                        {prob.title}
+                      </span>
+                      {prob.difficulty && (
+                        <span className={`difficulty-badge diff-${prob.difficulty.toLowerCase()}`}>
+                          {prob.difficulty}
+                        </span>
+                      )}
+                    </div>
+                    
+                    {!taskProgress[index] && !reviewsNeeded[index] && (
+                      <button className="rep-btn" onClick={(e) => handleSpacedRepetition(e, index)}>🧠 Review Later</button>
+                    )}
+                    {reviewsNeeded[index] && <span style={{fontSize: '12px', color: 'var(--warning)'}}>Queued</span>}
+                  </div>
+
+                  {expandedTask === index && (
+                    <div className="task-details-drawer">
+                      
+                      {prob.description && (
+                        <div>
+                          <div className="detail-section-title">Mission Briefing</div>
+                          <div className="problem-desc">{prob.description}</div>
+                        </div>
+                      )}
+
+                      {prob.hint && (
+                        <div className="hint-box"><strong>💡 Neural Hint:</strong> {prob.hint}</div>
+                      )}
+
+                      {prob.starterCode && (
+                        <div>
+                          <div className="detail-section-title">Starter Template</div>
+                          <div className="code-snippet">{prob.starterCode}</div>
+                        </div>
+                      )}
+
+                      {prob.link ? (
+                        <div className="action-bar">
+                          <a href={prob.link} target="_blank" rel="noopener noreferrer" className="solve-btn">
+                            Solve on LeetCode ↗
+                          </a>
+                        </div>
+                      ) : (
+                         <div style={{fontSize: '12px', color: 'var(--text-dim)'}}>
+                           (No LeetCode link provided for this challenge yet)
+                         </div>
+                      )}
+
+                    </div>
+                  )}
+
+                </div>
+              ))}
+            </div>
+
+            <div className="section-title">Execution Notes & Autopsy</div>
+            <div className="md-tabs">
+              <button className={`md-tab ${notesTab === 'write' ? 'active' : ''}`} onClick={() => setNotesTab('write')}>Write</button>
+              <button className={`md-tab ${notesTab === 'preview' ? 'active' : ''}`} onClick={() => setNotesTab('preview')}>Preview Markdown</button>
+            </div>
+            {notesTab === 'write' ? (
+              <textarea className="notes-area" placeholder="Use Markdown here! e.g. **Bold**, `code blocks`, or bullet points..." value={notes} onChange={(e) => setNotes(e.target.value)} />
+            ) : (
+              <div className="md-preview">{notes ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{notes}</ReactMarkdown> : <span style={{color: 'var(--text-dim)'}}>Nothing to preview. Start typing...</span>}</div>
+            )}
+            <div className="save-status" style={{ opacity: statusOpacity }}>Autosaved to cloud storage ✓</div>
+          </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
