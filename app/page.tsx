@@ -41,22 +41,38 @@ export default function Home() {
 
     async function loadCloudData() {
       if (!userId) return;
-      const { data, error } = await supabase
+      
+      // 1. Fetch Task Progress
+      const { data: taskData, error: taskError } = await supabase
         .from('user_progress')
         .select('task_index, is_completed')
         .eq('user_id', userId)
         .eq('week_num', activeWeek);
 
-      if (error) {
-        console.error("Error fetching data:", error);
-        return;
-      }
+      if (taskError) console.error("Error fetching tasks:", taskError);
 
       const cloudTasks: Record<number, boolean> = {};
-      data?.forEach(row => {
+      taskData?.forEach(row => {
         cloudTasks[row.task_index] = row.is_completed;
       });
       setTaskProgress(cloudTasks);
+
+      // 2. Fetch Cloud Notes
+      const { data: notesData, error: notesError } = await supabase
+        .from('user_notes')
+        .select('notes_text')
+        .eq('user_id', userId)
+        .eq('week_num', activeWeek)
+        .maybeSingle(); // Gets one row safely
+
+      if (notesError) console.error("Error fetching notes:", notesError);
+      
+      // If we have cloud notes, load them. Otherwise, check local storage.
+      if (notesData?.notes_text) {
+        setNotes(notesData.notes_text);
+      } else {
+        setNotes(localStorage.getItem(`w${activeWeek}_notes`) || "");
+      }
     }
 
     if (isSignedIn && userId) {
@@ -67,32 +83,45 @@ export default function Home() {
         loadedTasks[index] = localStorage.getItem(`w${activeWeek}_task${index}`) === 'true';
       });
       setTaskProgress(loadedTasks);
+      setNotes(localStorage.getItem(`w${activeWeek}_notes`) || "");
     }
-    
-    setNotes(localStorage.getItem(`w${activeWeek}_notes`) || "");
   }, [activeWeek, isSignedIn, userId]);
 
-  // Autosave notes (Currently keeping notes in local storage for simplicity, can move to cloud later)
+  // Autosave notes to Cloud
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
+    const timeoutId = setTimeout(async () => {
       const savedNote = localStorage.getItem(`w${activeWeek}_notes`) || "";
+      
+      // Only fire a save if the text actually changed
       if (notes !== savedNote) {
-        localStorage.setItem(`w${activeWeek}_notes`, notes);
+        localStorage.setItem(`w${activeWeek}_notes`, notes); // Save local backup
+        
+        // Save directly to cloud if logged in
+        if (isSignedIn && userId) {
+          const { error } = await supabase
+            .from('user_notes')
+            .upsert({
+              user_id: userId,
+              week_num: activeWeek,
+              notes_text: notes
+            }, { onConflict: 'user_id, week_num' });
+            
+          if (error) console.error("Error saving notes to cloud:", error);
+        }
+
+        // Show the success checkmark
         setStatusOpacity(1);
         setTimeout(() => setStatusOpacity(0), 2000);
       }
-    }, 1000);
+    }, 1000); // Waits 1 second after you stop typing to save
     return () => clearTimeout(timeoutId);
-  }, [notes, activeWeek]);
+  }, [notes, activeWeek, isSignedIn, userId]);
 
   // The Checkbox Toggle Function
   const toggleTask = async (index: number) => {
     const newVal = !taskProgress[index];
-    
-    // 1. Update UI instantly
     setTaskProgress(prev => ({ ...prev, [index]: newVal }));
 
-    // 2. Save Data (Cloud or Local)
     if (isSignedIn && userId) {
       const { error } = await supabase
         .from('user_progress')
@@ -101,7 +130,7 @@ export default function Home() {
           week_num: activeWeek,
           task_index: index,
           is_completed: newVal
-        }, { onConflict: 'user_id, week_num, task_index' }); // Updates if exists, creates if new
+        }, { onConflict: 'user_id, week_num, task_index' });
         
       if (error) console.error("Error saving to cloud:", error);
     } else {
@@ -196,7 +225,7 @@ export default function Home() {
             onChange={(e) => setNotes(e.target.value)}
           />
           <div className="save-status" style={{ opacity: statusOpacity }}>
-            Autosaved to browser storage ✓
+            Autosaved to cloud storage ✓
           </div>
         </div>
       </div>
