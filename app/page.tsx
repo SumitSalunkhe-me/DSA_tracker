@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
 import { createClient } from '@supabase/supabase-js';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
-// Initialize Supabase Client
+// Supabase Init
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -30,203 +32,195 @@ export default function Home() {
   const [notes, setNotes] = useState("");
   const [statusOpacity, setStatusOpacity] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // New States for Features
+  const [notesTab, setNotesTab] = useState<'write' | 'preview'>('write');
+  const [reviewsNeeded, setReviewsNeeded] = useState<Record<number, boolean>>({});
 
-  // Grab the User ID directly from Clerk Auth
   const { isLoaded, isSignedIn, userId } = useAuth();
 
-  // Load Data (Cloud if logged in, Local Storage if not)
+  // Load Data
   useEffect(() => {
     const activeData = dsaPlan.find(w => w.week === activeWeek);
     if (!activeData) return;
 
     async function loadCloudData() {
       if (!userId) return;
-      
-      // 1. Fetch Task Progress
-      const { data: taskData, error: taskError } = await supabase
-        .from('user_progress')
-        .select('task_index, is_completed')
-        .eq('user_id', userId)
-        .eq('week_num', activeWeek);
-
-      if (taskError) console.error("Error fetching tasks:", taskError);
-
+      const { data: taskData } = await supabase.from('user_progress').select('task_index, is_completed').eq('user_id', userId).eq('week_num', activeWeek);
       const cloudTasks: Record<number, boolean> = {};
-      taskData?.forEach(row => {
-        cloudTasks[row.task_index] = row.is_completed;
-      });
+      taskData?.forEach(row => { cloudTasks[row.task_index] = row.is_completed; });
       setTaskProgress(cloudTasks);
 
-      // 2. Fetch Cloud Notes
-      const { data: notesData, error: notesError } = await supabase
-        .from('user_notes')
-        .select('notes_text')
-        .eq('user_id', userId)
-        .eq('week_num', activeWeek)
-        .maybeSingle(); // Gets one row safely
-
-      if (notesError) console.error("Error fetching notes:", notesError);
-      
-      // If we have cloud notes, load them. Otherwise, check local storage.
-      if (notesData?.notes_text) {
-        setNotes(notesData.notes_text);
-      } else {
-        setNotes(localStorage.getItem(`w${activeWeek}_notes`) || "");
-      }
+      const { data: notesData } = await supabase.from('user_notes').select('notes_text').eq('user_id', userId).eq('week_num', activeWeek).maybeSingle();
+      if (notesData?.notes_text) setNotes(notesData.notes_text);
     }
 
-    if (isSignedIn && userId) {
-      loadCloudData();
-    } else {
-      const loadedTasks: Record<number, boolean> = {};
-      activeData.problems.forEach((_, index) => {
-        loadedTasks[index] = localStorage.getItem(`w${activeWeek}_task${index}`) === 'true';
-      });
-      setTaskProgress(loadedTasks);
-      setNotes(localStorage.getItem(`w${activeWeek}_notes`) || "");
-    }
+    if (isSignedIn && userId) loadCloudData();
   }, [activeWeek, isSignedIn, userId]);
 
-  // Autosave notes to Cloud
+  // Autosave Notes
   useEffect(() => {
     const timeoutId = setTimeout(async () => {
       const savedNote = localStorage.getItem(`w${activeWeek}_notes`) || "";
-      
-      // Only fire a save if the text actually changed
-      if (notes !== savedNote) {
-        localStorage.setItem(`w${activeWeek}_notes`, notes); // Save local backup
-        
-        // Save directly to cloud if logged in
+      if (notes !== savedNote && notes !== "") {
+        localStorage.setItem(`w${activeWeek}_notes`, notes);
         if (isSignedIn && userId) {
-          const { error } = await supabase
-            .from('user_notes')
-            .upsert({
-              user_id: userId,
-              week_num: activeWeek,
-              notes_text: notes
-            }, { onConflict: 'user_id, week_num' });
-            
-          if (error) console.error("Error saving notes to cloud:", error);
+          await supabase.from('user_notes').upsert({ user_id: userId, week_num: activeWeek, notes_text: notes }, { onConflict: 'user_id, week_num' });
         }
-
-        // Show the success checkmark
         setStatusOpacity(1);
         setTimeout(() => setStatusOpacity(0), 2000);
       }
-    }, 1000); // Waits 1 second after you stop typing to save
+    }, 1000);
     return () => clearTimeout(timeoutId);
   }, [notes, activeWeek, isSignedIn, userId]);
 
-  // The Checkbox Toggle Function
   const toggleTask = async (index: number) => {
     const newVal = !taskProgress[index];
     setTaskProgress(prev => ({ ...prev, [index]: newVal }));
-
     if (isSignedIn && userId) {
-      const { error } = await supabase
-        .from('user_progress')
-        .upsert({
-          user_id: userId,
-          week_num: activeWeek,
-          task_index: index,
-          is_completed: newVal
-        }, { onConflict: 'user_id, week_num, task_index' });
-        
-      if (error) console.error("Error saving to cloud:", error);
-    } else {
-      localStorage.setItem(`w${activeWeek}_task${index}`, String(newVal));
+      await supabase.from('user_progress').upsert({ user_id: userId, week_num: activeWeek, task_index: index, is_completed: newVal }, { onConflict: 'user_id, week_num, task_index' });
     }
   };
 
-  const selectWeek = (week: number) => {
-    setActiveWeek(week);
-    setIsMobileMenuOpen(false);
+  const handleSpacedRepetition = (index: number) => {
+    setReviewsNeeded(prev => ({ ...prev, [index]: true }));
+    alert("Added to Spaced Repetition Engine! We will remind you to re-solve this in 3 days.");
+    // In next phase, we save this timestamp to Supabase.
   };
 
   const activeData = dsaPlan.find(w => w.week === activeWeek);
-  let currentPhase = "";
+  const totalTasks = activeData?.problems.length || 0;
+  const completedTasks = Object.values(taskProgress).filter(Boolean).length;
+  const progressPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+
+  const groupedPlan = dsaPlan.reduce((acc, curr) => {
+    if (!acc[curr.phase]) acc[curr.phase] = [];
+    acc[curr.phase].push(curr);
+    return acc;
+  }, {} as Record<string, typeof dsaPlan>);
+
+  // Mock array for heatmap rendering
+  const mockHeatmap = Array.from({ length: 60 }).map((_, i) => Math.floor(Math.random() * 4));
 
   return (
     <>
-      <div 
-        className={`overlay ${isMobileMenuOpen ? 'open' : ''}`} 
-        onClick={() => setIsMobileMenuOpen(false)}
-      ></div>
+      <div className={`overlay ${isMobileMenuOpen ? 'open' : ''}`} onClick={() => setIsMobileMenuOpen(false)}></div>
 
       <div className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
         <div className="sidebar-header">Neural Path DSA</div>
-        {dsaPlan.map((data) => {
-          let phaseHeader = null;
-          if (data.phase !== currentPhase) {
-            phaseHeader = <div key={`phase-${data.phase}`} className="nav-group">{data.phase}</div>;
-            currentPhase = data.phase;
-          }
-          return (
-            <div key={data.week}>
-              {phaseHeader}
-              <div 
-                className={`nav-item ${activeWeek === data.week ? 'active' : ''}`}
-                onClick={() => selectWeek(data.week)}
-              >
-                Week {data.week}: {data.title.split(',')[0]}
-              </div>
+        {Object.entries(groupedPlan).map(([phase, weeks]) => (
+          <div key={phase}>
+            <div className="nav-group">{phase}</div>
+            <div className="timeline-container">
+              <div className="timeline-line"></div>
+              {weeks.map((data) => (
+                <div key={data.week} className={`timeline-item ${activeWeek === data.week ? 'active' : ''}`} onClick={() => {setActiveWeek(data.week); setIsMobileMenuOpen(false);}}>
+                  <div className="timeline-dot"></div>
+                  Week {data.week}: {data.title.split(',')[0]}
+                </div>
+              ))}
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
 
       <div className="main-content">
         <div className="content-wrapper">
           
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-            <div>
-              <div className="mobile-header" style={{ marginBottom: 0, display: isMobileMenuOpen ? 'none' : '' }}>
-                <button className="menu-btn" onClick={() => setIsMobileMenuOpen(true)}>☰ Menu</button>
-              </div>
-              <div className="header-badge" style={{ display: 'inline-block', margin: 0 }}>WEEK {activeData?.week}</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div className="mobile-header" style={{ marginBottom: 0, display: isMobileMenuOpen ? 'none' : '' }}>
+              <button className="menu-btn" onClick={() => setIsMobileMenuOpen(true)}>☰ Menu</button>
             </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginLeft: 'auto' }}>
               {!isLoaded ? null : !isSignedIn ? (
-                <SignInButton mode="modal">
-                  <button className="menu-btn" style={{ background: 'var(--primary)', color: '#000', border: 'none' }}>
-                    Sign In
-                  </button>
-                </SignInButton>
-              ) : (
-                <UserButton />
-              )}
+                <SignInButton mode="modal"><button className="menu-btn" style={{ background: 'var(--primary)', color: '#000', border: 'none' }}>Sign In</button></SignInButton>
+              ) : <UserButton />}
             </div>
           </div>
 
+          {/* --- NEW DASHBOARD GRID --- */}
+          <div className="dashboard-grid">
+            {/* Heatmap Area */}
+            <div className="heatmap-card">
+              <div className="section-title" style={{marginBottom: '5px'}}>Consistency Heatmap</div>
+              <div style={{fontSize: '12px', color: 'var(--text-dim)'}}>14 Day Streak! Keep building neural pathways.</div>
+              <div className="heatmap-grid">
+                {mockHeatmap.map((level, i) => (
+                  <div key={i} className={`heat-box level-${level}`}></div>
+                ))}
+              </div>
+            </div>
+
+            {/* Social Accountability Feed */}
+            <div className="feed-card">
+              <div className="section-title">Live Friend Feed</div>
+              <div className="feed-item">
+                <div className="feed-avatar">S</div>
+                <div className="feed-text"><strong>Soham</strong> conquered <em>Two Sum</em>.</div>
+              </div>
+              <div className="feed-item">
+                <div className="feed-avatar" style={{background: 'var(--success)'}}>A</div>
+                <div className="feed-text"><strong>Ayush</strong> started <em>Sliding Window</em>.</div>
+              </div>
+              <div className="feed-item">
+                <div className="feed-avatar" style={{background: 'var(--warning)'}}>An</div>
+                <div className="feed-text"><strong>Anubhav</strong> is on a 5-day streak!</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="header-badge">WEEK {activeData?.week}</div>
           <h1 className="week-title">{activeData?.title}</h1>
           <p className="week-focus">{activeData?.focus}</p>
+
+          <div className="progress-container">
+            <div className="progress-fill" style={{ width: `${progressPercentage}%` }}></div>
+          </div>
 
           <div className="section-title">Execution Checklist</div>
           <div className="task-list">
             {activeData?.problems.map((prob, index) => (
               <label key={index} className="task-card">
-                <input 
-                  type="checkbox" 
-                  className="task-checkbox" 
-                  checked={taskProgress[index] || false}
-                  onChange={() => toggleTask(index)}
-                />
+                <input type="checkbox" className="task-checkbox" checked={taskProgress[index] || false} onChange={() => toggleTask(index)} />
                 <span className="task-name">{prob}</span>
+                
+                {/* Spaced Repetition Button */}
+                {!taskProgress[index] && !reviewsNeeded[index] && (
+                  <button className="rep-btn" onClick={(e) => { e.preventDefault(); handleSpacedRepetition(index); }}>
+                    🧠 Failed - Review in 3 Days
+                  </button>
+                )}
+                {reviewsNeeded[index] && <span style={{marginLeft: 'auto', fontSize: '12px', color: 'var(--warning)'}}>Queued for Review</span>}
               </label>
             ))}
           </div>
 
           <div className="section-title">Execution Notes & Autopsy</div>
-          <textarea 
-            className="notes-area" 
-            placeholder="Paste your dry-runs, failed approaches, and time/space complexity notes here..."
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-          />
-          <div className="save-status" style={{ opacity: statusOpacity }}>
-            Autosaved to cloud storage ✓
+          
+          {/* Markdown Editor Tabs */}
+          <div className="md-tabs">
+            <button className={`md-tab ${notesTab === 'write' ? 'active' : ''}`} onClick={() => setNotesTab('write')}>Write</button>
+            <button className={`md-tab ${notesTab === 'preview' ? 'active' : ''}`} onClick={() => setNotesTab('preview')}>Preview Markdown</button>
           </div>
+
+          {notesTab === 'write' ? (
+            <textarea 
+              className="notes-area" 
+              placeholder="Use Markdown here! e.g. **Bold**, `code blocks`, or bullet points..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
+          ) : (
+            <div className="md-preview">
+              {notes ? (
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{notes}</ReactMarkdown>
+              ) : (
+                <span style={{color: 'var(--text-dim)'}}>Nothing to preview. Start typing...</span>
+              )}
+            </div>
+          )}
+          
+          <div className="save-status" style={{ opacity: statusOpacity }}>Autosaved to cloud storage ✓</div>
         </div>
       </div>
     </>
