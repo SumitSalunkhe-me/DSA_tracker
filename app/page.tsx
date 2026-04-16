@@ -148,6 +148,7 @@ export default function Home() {
   
   const [notesTab, setNotesTab] = useState<'write' | 'preview'>('write');
   const [reviewsNeeded, setReviewsNeeded] = useState<Record<number, boolean>>({});
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
   const { isLoaded, isSignedIn, userId } = useAuth();
 
@@ -160,6 +161,69 @@ export default function Home() {
     setExpandedTask(null);
     setNotes("");
     setTaskProgress({});
+  };
+
+  useEffect(() => {
+    const savedTheme = window.localStorage.getItem('dsa-theme');
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      setTheme(savedTheme);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('theme-light', theme === 'light');
+    document.documentElement.classList.toggle('theme-dark', theme === 'dark');
+    window.localStorage.setItem('dsa-theme', theme);
+  }, [theme]);
+
+  const getProblemConcepts = (title: string) => {
+    const normalized = title.toLowerCase();
+    const topics: Record<string, string[]> = {
+      'two sum': ['Hash map lookup', 'Array traversal', 'Complement search', 'Two-pointer setup'],
+      'contains duplicate': ['Hash set', 'Duplicate detection', 'O(n) time'],
+      'missing number': ['Arithmetic series', 'XOR trick', 'Set difference'],
+      'single number': ['XOR gates', 'Bitwise cancelation', 'Linear scan'],
+      'valid palindrome': ['Two pointers', 'String normalization', 'Alphanumeric filtering'],
+      '3sum': ['Sorting + two pointers', 'Duplicate skipping', 'Triplet combination'],
+      'container with most water': ['Two-pointer technique', 'Greedy width-height', 'Max area'],
+      'trapping rain water': ['Water volume', 'Two pointers', 'Stack / elevation logic'],
+      'valid anagram': ['Character counts', 'Hash maps', 'String comparison'],
+      'group anagrams': ['Signature sorting', 'Hash map grouping', 'String buckets'],
+      'top k frequent elements': ['Frequency map', 'Min-heap', 'Bucket sort'],
+      'longest consecutive sequence': ['Hash set lookup', 'Sequence expansion', 'O(n) scanning'],
+      'reverse linked list': ['Pointer reversal', 'Iterative vs recursive', 'In-place transform'],
+      'merge two sorted lists': ['Dummy node pattern', 'Sorted merge', 'List traversal'],
+      'linked list cycle': ['Fast/slow pointers', 'Cycle detection', 'Floyd’s algorithm'],
+      'valid parentheses': ['Stack usage', 'Matching pairs', 'Syntax validation'],
+      'evaluate reverse polish notation': ['Stack evaluation', 'Operator order', 'Postfix notation'],
+      'min stack': ['Auxiliary stack', 'Constant time min', 'Stack invariants'],
+      'daily temperatures': ['Monotonic stack', 'Next greater element', 'Temperature span'],
+      'invert binary tree': ['Recursion', 'Swap children', 'DFS traversal'],
+      'maximum depth of binary tree': ['Tree height', 'DFS / BFS', 'Recursive depth'],
+      'lowest common ancestor': ['Binary tree traversal', 'Path comparison', 'Divide and conquer'],
+      'binary tree level order traversal': ['BFS queue', 'Layer-by-layer', 'Tree levels'],
+      'binary tree right side view': ['Level order', 'Visibility by depth', 'Queue processing'],
+      'implement trie': ['Prefix tree', 'Trie nodes', 'Character branching'],
+      'kth largest element in a stream': ['Heaps', 'Sliding window', 'Stream processing'],
+      'merge k sorted lists': ['Divide and conquer', 'Heap merge', 'Linked list merge'],
+      'number of islands': ['DFS / BFS', 'Grid traversal', 'Connected components'],
+      'clone graph': ['Graph traversal', 'DFS/BFS', 'Deep copy'],
+      'course schedule': ['Topological sort', 'DAG', 'Dependency graph'],
+      'climbing stairs': ['Fibonacci sequence', 'Dynamic programming', 'State transitions'],
+      'house robber': ['DP with constraints', 'Choose vs skip', 'Optimal substructure'],
+      'coin change': ['Unbounded knapsack', 'DP tabulation', 'Subproblem reuse'],
+      'longest increasing subsequence': ['Patience sorting', 'DP + binary search', 'Subsequence tracking'],
+      'subsets': ['Backtracking', 'Bit masking', 'Subset generation'],
+      'permutations': ['DFS recursion', 'Swap technique', 'Backtracking'],
+      'combination sum': ['Backtracking', 'Sum pruning', 'Sorted candidates'],
+      'word search': ['DFS grid search', 'Visited tracking', 'Prefix pruning']
+    };
+
+    return Object.entries(topics).find(([key]) => normalized.includes(key))?.[1] || ['Core algorithm design', 'Problem breakdown', 'Optimal strategy'];
+  };
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
   useEffect(() => {
@@ -227,10 +291,13 @@ export default function Home() {
             {course}
           </div>
         ))}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', paddingRight: '20px' }}>
-            {!isLoaded ? null : !isSignedIn ? (
-              <SignInButton mode="modal"><button className="menu-btn" style={{ background: 'var(--primary)', color: '#000', border: 'none', padding: '6px 12px' }}>Sign In</button></SignInButton>
-            ) : <UserButton />}
+        <div className="top-slider-controls">
+          <button type="button" className="theme-toggle-btn" onClick={toggleTheme}>
+            {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+          </button>
+          {!isLoaded ? null : !isSignedIn ? (
+            <SignInButton mode="modal"><button className="menu-btn" style={{ background: 'var(--primary)', color: '#000', border: 'none', padding: '6px 12px' }}>Sign In</button></SignInButton>
+          ) : <UserButton />}
         </div>
       </div>
 
@@ -309,10 +376,22 @@ export default function Home() {
                       )}
                     </div>
                     
-                    {!taskProgress[index] && !reviewsNeeded[index] && (
-                      <button className="rep-btn" onClick={(e) => handleSpacedRepetition(e, index)}>🧠 Review Later</button>
-                    )}
-                    {reviewsNeeded[index] && <span style={{fontSize: '12px', color: 'var(--warning)'}}>Queued</span>}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <button
+                        type="button"
+                        className="learn-more-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExpandedTask(index);
+                        }}
+                      >
+                        📘 Learn more
+                      </button>
+                      {!taskProgress[index] && !reviewsNeeded[index] && (
+                        <button className="rep-btn" onClick={(e) => handleSpacedRepetition(e, index)}>🧠 Review Later</button>
+                      )}
+                      {reviewsNeeded[index] && <span style={{fontSize: '12px', color: 'var(--warning)'}}>Queued</span>}
+                    </div>
                   </div>
 
                   {expandedTask === index && (
@@ -335,6 +414,13 @@ export default function Home() {
                           <div className="code-snippet">{prob.starterCode}</div>
                         </div>
                       )}
+
+                      <div className="detail-section-title">Learn More</div>
+                      <div className="learn-more-list">
+                        {getProblemConcepts(prob.title).map((concept) => (
+                          <span key={concept} className="learn-more-chip">{concept}</span>
+                        ))}
+                      </div>
 
                       {prob.link ? (
                         <div className="action-bar">
