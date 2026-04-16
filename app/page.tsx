@@ -22,7 +22,7 @@ const curriculumData: Record<string, any[]> = {
       ] 
     },
     { 
-      phase: "Phase 1: Mechanics", week: 2, title: "Two Pointers", focus: "Moving from O(N²) loops to O(N) by converging from both sides.", 
+      phase: "Phase 1: Mechanics", week: 30, title: "Two Pointers", focus: "Moving from O(N²) loops to O(N) by converging from both sides.", 
       problems: [
         { title: "Valid Palindrome", difficulty: "Easy", link: "https://leetcode.com/problems/valid-palindrome/", description: "Check if a string is a palindrome, ignoring non-alphanumeric characters.", hint: "Set a left pointer at 0 and right pointer at len(s)-1." },
         { title: "3Sum", difficulty: "Medium", link: "https://leetcode.com/problems/3sum/" },
